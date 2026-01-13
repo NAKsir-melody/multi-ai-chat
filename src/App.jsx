@@ -145,26 +145,52 @@ const MultiAIChat = () => {
         return '오류가 발생했습니다: ' + error.message;
       }
     };
-    const callClaude = async () => {
-  try {
-    const response = await fetch('/api/claude', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        message: currentInput,
-        apiKey: apiKeys.claude
-      })
-    });
-    const data = await response.json();
-    return data.content[0].text;
-  } catch (error) {
-    console.error('Claude Error:', error);
-    return '오류가 발생했습니다: ' + error.message;
-  }
-};
 
+    const callClaude = async () => {
+      try {
+        const response = await fetch('/api/claude', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            message: currentInput,
+            apiKey: apiKeys.claude
+          })
+        });
+        
+        const data = await response.json();
+        
+        // 응답 로그 (디버깅용)
+        console.log('Claude response:', data);
+        
+        if (!response.ok) {
+          console.error('Claude API Error:', data);
+          return `Claude 오류: ${data.error?.message || data.error || '알 수 없는 오류'}`;
+        }
+        
+        // 응답 구조 확인
+        if (!data.content) {
+          console.error('No content in Claude response:', data);
+          return 'Claude에서 content가 없는 응답을 받았습니다.';
+        }
+        
+        if (!Array.isArray(data.content) || data.content.length === 0) {
+          console.error('Empty or invalid content array:', data);
+          return 'Claude에서 빈 응답을 받았습니다.';
+        }
+        
+        if (!data.content[0].text) {
+          console.error('No text in content:', data);
+          return 'Claude에서 텍스트가 없는 응답을 받았습니다.';
+        }
+        
+        return data.content[0].text;
+      } catch (error) {
+        console.error('Claude Error:', error);
+        return '오류가 발생했습니다: ' + error.message;
+      }
+    };
 
     try {
       const [gptResponse, geminiResponse, claudeResponse] = await Promise.all([
